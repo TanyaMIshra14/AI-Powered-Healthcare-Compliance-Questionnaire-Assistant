@@ -46,8 +46,6 @@ Generated responses can be exported for submission or review.
 Project Structure
 
 almabase_healthcare_tool/
-│
-└── fixed_tool/
     ├── main.py                # FastAPI application entry point
     ├── auth.py                # Authentication and password hashing
     ├── database.py            # Database connection setup
