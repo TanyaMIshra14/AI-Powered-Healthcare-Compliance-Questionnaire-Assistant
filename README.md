@@ -1,12 +1,12 @@
 # AI-Powered-Healthcare-Compliance-Questionnaire-Assistant
 
-Overview
+**Overview**
 
 The AI-Powered Healthcare Compliance Questionnaire Assistant is a Python-based application designed to automate responses to healthcare compliance questionnaires. It uses Retrieval-Augmented Generation (RAG) to retrieve relevant information from policy documents and generate structured answers.
 The system provides a web interface built with FastAPI and Jinja2 templates, allowing users to upload questionnaires, retrieve compliance information, and export responses.
 This tool helps reduce the manual effort required to answer security, infrastructure, and compliance-related healthcare questionnaires.
 
-Key Features
+**Key Features**
 
 Automated Questionnaire Processing – Upload compliance questionnaires and generate responses automatically.
 Retrieval-Augmented Generation (RAG) – Retrieves relevant information from reference policy documents before generating answers.
@@ -15,7 +15,7 @@ Document Management – Upload reference compliance documents for knowledge retr
 Response Exporting – Export generated responses for further use.
 Web Interface – Interactive dashboard built with FastAPI and HTML templates.
 
-Tech Stack
+**Tech Stack**
 
 Python
 FastAPI
@@ -24,7 +24,7 @@ bcrypt (Password Hashing)
 Jinja2 Templates
 Retrieval-Augmented Generation (RAG)
 
-Project Architecture
+**Project Architecture**
 
 The system works in the following steps:
 
@@ -43,16 +43,17 @@ The RAG pipeline generates structured answers using retrieved knowledge.
 Export Results
 Generated responses can be exported for submission or review.
 
-Project Structure
+## Project Structure
 
+```
 almabase_healthcare_tool/
     ├── main.py                # FastAPI application entry point
-    ├── auth.py                # Authentication and password hashing
-    ├── database.py            # Database connection setup
+    ├── auth.py                # Authentication logic
+    ├── database.py            # Database connection
     ├── models.py              # Database models
     ├── rag.py                 # Retrieval-Augmented Generation pipeline
-    ├── export.py              # Export generated responses
-    ├── requirements.txt       # Project dependencies
+    ├── export.py              # Export responses
+    ├── requirements.txt       # Dependencies
     ├── healthcare.db          # SQLite database
 │
 ├── templates/
@@ -61,7 +62,9 @@ almabase_healthcare_tool/
 │   ├── dashboard.html
 │   └── results.html
 
-Installation
+```
+
+**Installation**
 1. Clone the Repository
 git clone https://github.com/yourusername/almabase_healthcare_tool.git
 cd almabase_healthcare_tool
