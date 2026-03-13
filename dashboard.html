@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — MediQuery AI</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --teal: #0d9488; --teal-dark: #0f766e; --teal-light: #f0fdfa;
+      --slate: #0f172a; --slate-mid: #334155; --muted: #64748b;
+      --surface: #f8fafc; --white: #ffffff; --border: #e2e8f0;
+      --error: #dc2626;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--slate); min-height: 100vh; }
+
+    nav {
+      background: var(--white); border-bottom: 1px solid var(--border);
+      padding: 0 2rem; height: 60px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-family: 'DM Serif Display', serif; font-size: 1.2rem; color: var(--teal); }
+    .nav-right { display: flex; align-items: center; gap: 1rem; }
+    .nav-email { font-size: 0.875rem; color: var(--muted); }
+    .nav-logout { font-size: 0.875rem; color: var(--muted); text-decoration: none; padding: 0.4rem 0.9rem; border: 1px solid var(--border); border-radius: 7px; transition: all 0.2s; }
+    .nav-logout:hover { border-color: var(--teal); color: var(--teal); }
+
+    .main { max-width: 860px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+
+    .page-header { margin-bottom: 2.5rem; }
+    .page-header h1 { font-family: 'DM Serif Display', serif; font-size: 2rem; color: var(--slate); margin-bottom: 0.4rem; }
+    .page-header p { color: var(--muted); font-size: 0.95rem; }
+
+    .upload-card {
+      background: var(--white); border: 1.5px solid var(--border);
+      border-radius: 16px; padding: 2rem 2.5rem; margin-bottom: 2.5rem;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+    .upload-card h2 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .upload-card > p { color: var(--muted); font-size: 0.875rem; margin-bottom: 1.75rem; }
+
+    .upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+
+    .upload-zone {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 1.75rem 1.25rem;
+      text-align: center; cursor: pointer; transition: all 0.2s;
+      position: relative; background: var(--surface);
+    }
+    .upload-zone:hover, .upload-zone.dragover { border-color: var(--teal); background: var(--teal-light); }
+    .upload-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+    .upload-label { font-weight: 500; font-size: 0.9rem; color: var(--slate-mid); }
+    .upload-hint { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+    .file-selected { font-size: 0.8rem; color: var(--teal); margin-top: 0.5rem; font-weight: 500; min-height: 1.2em; }
+
+    .error-msg { background: #fef2f2; border: 1px solid #fecaca; color: var(--error); border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1.25rem; }
+
+    .btn-generate {
+      margin-top: 1.5rem; width: 100%; padding: 0.9rem;
+      background: var(--teal); color: white; border: none; border-radius: 10px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      gap: 10px; transition: background 0.2s;
+    }
+    .btn-generate:hover:not(:disabled) { background: var(--teal-dark); }
+    .btn-generate:disabled { background: #94a3b8; cursor: not-allowed; }
+
+    /* Loading overlay */
+    #loading-overlay {
+      display: none; position: fixed; inset: 0; z-index: 200;
+      background: rgba(15,23,42,0.55); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    #loading-overlay.show { display: flex; }
+
+    .loading-box {
+      background: var(--white); border-radius: 20px;
+      padding: 2.5rem 3rem; text-align: center;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.25);
+      max-width: 380px; width: 90%;
+      animation: popIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes popIn { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+
+    .pulse-ring {
+      width: 72px; height: 72px; margin: 0 auto 1.5rem; position: relative;
+    }
+    .pulse-ring::before, .pulse-ring::after {
+      content: ''; position: absolute; inset: 0;
+      border-radius: 50%; border: 3px solid var(--teal);
+      animation: pulse-out 1.6s ease-out infinite;
+    }
+    .pulse-ring::after { animation-delay: 0.8s; }
+    .pulse-inner {
+      position: absolute; inset: 12px; background: var(--teal);
+      border-radius: 50%; display: flex; align-items: center;
+      justify-content: center; font-size: 1.4rem;
+    }
+    @keyframes pulse-out {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.8); opacity: 0; }
+    }
+
+    .loading-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--slate); margin-bottom: 0.5rem; }
+    .loading-sub { font-size: 0.875rem; color: var(--muted); margin-bottom: 1.5rem; line-height: 1.5; }
+
+    .progress-track { background: var(--surface); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 0.75rem; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--teal), #14b8a6); border-radius: 99px; width: 0%; transition: width 0.4s ease; }
+
+    .loading-status { font-size: 0.8rem; color: var(--muted); }
+    .loading-tip { margin-top: 1.25rem; font-size: 0.78rem; color: #94a3b8; font-style: italic; }
+
+    /* Past runs */
+    .section-title { font-size: 1rem; font-weight: 600; color: var(--slate); margin-bottom: 1rem; }
+    .runs-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .run-card {
+      background: var(--white); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1rem 1.25rem; display: flex; align-items: center;
+      justify-content: space-between; transition: box-shadow 0.2s;
+    }
+    .run-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+    .run-info { display: flex; flex-direction: column; gap: 2px; }
+    .run-name { font-weight: 500; font-size: 0.9rem; }
+    .run-meta { font-size: 0.8rem; color: var(--muted); }
+    .btn-sm { padding: 0.4rem 0.9rem; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 0.8rem; font-weight: 500; cursor: pointer; text-decoration: none; transition: all 0.2s; border: 1px solid; }
+    .btn-outline { color: var(--teal); border-color: var(--teal); background: transparent; }
+    .btn-outline:hover { background: var(--teal-light); }
+    .empty-state { text-align: center; padding: 2.5rem; color: var(--muted); font-size: 0.9rem; border: 1px dashed var(--border); border-radius: 12px; }
+    .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+
+    @media (max-width: 600px) { .upload-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="nav-logo">🏥 MediQuery AI</div>
+    <div class="nav-right">
+      <span class="nav-email">{{ user.email }}</span>
+      <a href="/logout" class="nav-logout">Sign out</a>
+    </div>
+  </nav>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay">
+    <div class="loading-box">
+      <div class="pulse-ring">
+        <div class="pulse-inner">🤖</div>
+      </div>
+      <div class="loading-title">Generating Answers</div>
+      <div class="loading-sub">Searching your reference documents and generating AI answers. This may take a minute.</div>
+      <div class="progress-track">
+        <div class="progress-bar" id="progress-bar"></div>
+      </div>
+      <div class="loading-status" id="loading-status">Starting up…</div>
+      <div class="loading-tip">Ollama is processing questions in parallel on your machine.</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="page-header">
+      <h1>Questionnaire Dashboard</h1>
+      <p>Upload a questionnaire and reference documents to generate AI-powered answers.</p>
+    </div>
+
+    {% if error %}
+    <div class="error-msg">⚠️ {{ error }}</div>
+    {% endif %}
+
+    <div class="upload-card">
+      <h2>New Questionnaire Run</h2>
+      <p>Upload your questionnaire (.txt, one question per line) and 1–8 reference documents (.txt).</p>
+
+      <form action="/upload" method="post" enctype="multipart/form-data" id="upload-form">
+        <div class="upload-grid">
+          <div>
+            <div style="font-size:0.8rem;font-weight:600;color:var(--slate-mid);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em;">Questionnaire</div>
+            <div class="upload-zone" id="q-zone">
+              <input type="file" name="questionnaire" accept=".txt" required onchange="showFile(this,'q-file','q-zone')">
+              <div class="upload-icon">📋</div>
+              <div class="upload-label">Upload questionnaire</div>
+              <div class="upload-hint">.txt · one question per line</div>
+              <div class="file-selected" id="q-file"></div>
+            </div>
+          </div>
+          <div>
+            <div style="font-size:0.8rem;font-weight:600;color:var(--slate-mid);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em;">Reference Documents</div>
+            <div class="upload-zone" id="r-zone">
+              <input type="file" name="references" accept=".txt" multiple required onchange="showFile(this,'r-file','r-zone')">
+              <div class="upload-icon">📁</div>
+              <div class="upload-label">Upload references</div>
+              <div class="upload-hint">.txt · select multiple</div>
+              <div class="file-selected" id="r-file"></div>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-generate" type="submit" id="gen-btn">
+          ✨ Generate Answers
+        </button>
+      </form>
+    </div>
+
+    {% if runs %}
+    <div class="section-title">Previous Runs ({{ runs|length }})</div>
+    <div class="runs-list">
+      {% for run in runs %}
+      <div class="run-card">
+        <div class="run-info">
+          <div class="run-name">📄 {{ run.questionnaire_name }}</div>
+          <div class="run-meta">Run #{{ run.id }} · {{ run.created_at.strftime('%b %d, %Y at %H:%M') if run.created_at else 'N/A' }}</div>
+        </div>
+        <div class="run-actions">
+          <a href="/results/{{ run.id }}" class="btn-sm btn-outline">View Results</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <p>No runs yet. Upload your first questionnaire to get started.</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <script>
+    function showFile(input, targetId, zoneId) {
+      const el = document.getElementById(targetId);
+      if (input.files.length === 1) el.textContent = '✓ ' + input.files[0].name;
+      else if (input.files.length > 1) el.textContent = '✓ ' + input.files.length + ' files selected';
+      document.getElementById(zoneId).style.borderColor = 'var(--teal)';
+      document.getElementById(zoneId).style.background = 'var(--teal-light)';
+    }
+
+    const messages = [
+      "Building search index from your documents…",
+      "Searching for relevant context…",
+      "Running Ollama model locally…",
+      "Generating answers in parallel…",
+      "Processing remaining questions…",
+      "Almost there…"
+    ];
+    let msgIdx = 0, progress = 0;
+
+    document.getElementById('upload-form').addEventListener('submit', function () {
+      document.getElementById('gen-btn').disabled = true;
+      document.getElementById('loading-overlay').classList.add('show');
+
+      setInterval(() => {
+        const inc = progress < 40 ? 3 : progress < 70 ? 1.5 : progress < 88 ? 0.4 : 0;
+        progress = Math.min(progress + inc, 90);
+        document.getElementById('progress-bar').style.width = progress + '%';
+        if (Math.random() < 0.08) {
+          document.getElementById('loading-status').textContent = messages[msgIdx++ % messages.length];
+        }
+      }, 400);
+    });
+
+    document.querySelectorAll('.upload-zone').forEach(zone => {
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+      zone.addEventListener('drop', () => zone.classList.remove('dragover'));
+    });
+  </script>
+</body>
+</html>
